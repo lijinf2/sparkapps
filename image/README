@@ -1,0 +1,67 @@
+This programs pre-processing binary image data(e.g. SIFT1B, TinyImage 80M) using Spark. 
+How to use: take GIST1M (http://corpus-texmex.irisa.fr/) as example
+
+Assume we have already cd into working directory, i.e. sparkapp/image, we take the processing of SIFT1B as example.
+
+USAGE:
+
+1. Prepare dataset
+    a. Upload dataset to HDFS
+
+        hadoop dfs dfs.blocksize=67108864 -put bigann_base.bvecs /datasets/image/ANN_SIFT1B-raw/bigann_base.bvecs
+         
+        EXPLAIN: We define each block in HDFS has 64MB (i.e. 64 * 1024 * 1024 = 67108864 bytes), and have about 132 GB / 64MB = 2000 blocks. Each block is owned and processed by exactly a Spark executor. Enough blocks ensure good parallelism.  
+
+2. Prepare program
+    a. Compile terasort inputformat (For reading binary file)
+        
+        mvn package
+
+3. Start spark shell with compiled jar (under target/spark-terasort-1.0-SNAPSHOT-jar-with-dependencies.jar)
+    a. Modify open-shell.sh and specify the location of spark-shell (in the example, /data/opt/spark-2.0.2/bin)
+
+    b. Open the shell
+        sh open-shell.sh
+
+    c. Copy source code line by line to spark-shell
+        index.scala should be used at the very beginning to index vectors
+        Other scala files only accept indexed vectors produced by index.scala
+
+        EXPLAIN: In distributed manner, we cannot decide which chunk is processed by which worker, thus we need to index all the vectors at the very beginning
+
+
+
+DESCRIPTION:
+
+TeraInputFormat.scala:
+    Key is set to 4 bytes and Value is set to 128 bytes, both of which can be modified for your application scenario.
+
+TeraOutputFormat.scala:
+    Output key value pairs in binary format
+
+All scala files use TeraInputFormat.scala to deseiralize binary vectors.
+All scala files use TeraOutputFormat.scala to seiralize binary vectors.
+
+index.scala:
+    Input: vectors in binary format 
+    Functionality: Index vectors (id starts from 0)
+    Output: indexed vectors in binary format
+
+cal_groundtruth.scala:
+    Input1: indexed query vectors 
+    Input2: indexed item vectors
+    Output: top-k items, together with distance of each query (in text)
+
+zero_centered_bvecs.scala:
+    requirement: each feature is represented as char with 4 bytes (e.g. sift1b)
+    Input: indexed vectors in binary format (processed by index.scala)
+    Output: indexed vectors that is zero-centered
+
+zero_centered_fvecs.scala:
+    requirement: each feature is represented as float with 4 bytes (e.g. gist1m)
+    Input: indexed vectors in binary format (processed by index.scala)
+    Output: indexed vectors that is zero-centered
+
+ACKNOWLEDGEMENT:
+This project is developed based on Spark
+This project uses terainput formats of Spark developed by Ewan Higgs. (https://github.com/ehiggs/spark-terasort)
