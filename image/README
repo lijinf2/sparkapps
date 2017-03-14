@@ -12,13 +12,14 @@ USAGE:
          
         EXPLAIN: We define each block in HDFS has 64MB (i.e. 64 * 1024 * 1024 = 67108864 bytes), and have about 132 GB / 64MB = 2000 blocks. Each block is owned and processed by exactly a Spark executor. Enough blocks ensure good parallelism.  
 
-2. Prepare program
+2. Prepare inputformat
     a. Compile terasort inputformat (For reading binary file)
-        
+        cd inputformat
         mvn package
+        cd ../
 
 3. Start spark shell with compiled jar (under target/spark-terasort-1.0-SNAPSHOT-jar-with-dependencies.jar)
-    a. Modify open-shell.sh and specify the location of spark-shell (in the example, /data/opt/spark-2.0.2/bin)
+    a. Modify open-shell.sh and do the configuration (e.g. specify the location of spark-shell as /data/opt/spark-2.0.2/bin in the example)
 
     b. Open the shell
         sh open-shell.sh
@@ -45,22 +46,16 @@ All scala files use TeraOutputFormat.scala to seiralize binary vectors.
 index.scala:
     Input: vectors in binary format 
     Functionality: Index vectors (id starts from 0)
-    Output: indexed vectors in binary format
+    Output: indexed vectors in text format, (id feature1 feature2,..., )
 
+mean.scala:
+    Input: vectors outputed by index.scala
+    Output: zero-centered vectors in text format, (id, feature1 feature2,...,)
+    
 cal_groundtruth.scala:
     Input1: indexed query vectors 
     Input2: indexed item vectors
     Output: top-k items, together with distance of each query (in text)
-
-zero_centered_bvecs.scala:
-    requirement: each feature is represented as char with 4 bytes (e.g. sift1b)
-    Input: indexed vectors in binary format (processed by index.scala)
-    Output: indexed vectors that is zero-centered
-
-zero_centered_fvecs.scala:
-    requirement: each feature is represented as float with 4 bytes (e.g. gist1m)
-    Input: indexed vectors in binary format (processed by index.scala)
-    Output: indexed vectors that is zero-centered
 
 ACKNOWLEDGEMENT:
 This project is developed based on Spark
