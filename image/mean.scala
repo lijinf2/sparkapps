@@ -4,7 +4,7 @@ import scala.collection.mutable.ArrayBuffer
 // for sift1b base
 val bytesPerRecord = 132
 val inputPath = "hdfs://master:9000/jinfeng/image/sift1b/indexed_bigann_base.bvecs"
-val outputPath = "hdfs://master:9000/jinfeng/image/sift1b/txt_indexed_bigann_base.bvecs"
+val outputPath = "hdfs://master:9000/jinfeng/image/sift1b/centered_indexed_bigann_base.bvecs"
 
 val dataset = sc.binaryRecords(inputPath, bytesPerRecord).map(x => x.slice(0, bytesPerRecord))
 
